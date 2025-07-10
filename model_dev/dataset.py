@@ -39,5 +39,4 @@ class Data(Dataset):
                               max_length=100)
         
         target = self.onehot[target]
-        print(type(target))
-        return (data["input_ids"], target)
+        return (data["input_ids"][0], target)
