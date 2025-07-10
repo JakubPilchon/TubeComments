@@ -7,14 +7,18 @@ class Model(L.LightningModule):
     def __init__(self, 
                  hidden_dim : int,
                  embedding_dim: int,
-                 dropout_rate: float):
+                 dropout_rate: float,
+                 learning_rate: float):
         super().__init__()
+
+        self.lr = learning_rate
 
         self.embedding = Embedding(num_embeddings= 50_265, # number of embedding for tokenizer used
                                    embedding_dim = embedding_dim)
         
         self.lstm = LSTM(input_size=  embedding_dim,
-                         hidden_size= hidden_dim)
+                         hidden_size= hidden_dim,
+                         batch_first=True)
         
         self.dropout = Dropout(dropout_rate)
 
@@ -34,8 +38,8 @@ class Model(L.LightningModule):
         data, target = batch
         predicted = self(data)
 
-        loss = torch.nn.functional.cross_entropy(predicted, target.argmax(1))
-        accuracy = (target.argmax(1) == predicted.argmax(1)).float().mean()
+        loss = torch.nn.functional.cross_entropy(predicted, target)
+        accuracy = (target == predicted.argmax(1)).float().mean()
 
         self.log("train_loss", loss, prog_bar=True)
         self.log("train_accuracy", accuracy, prog_bar=True)
@@ -46,8 +50,8 @@ class Model(L.LightningModule):
         data, target = batch
         predicted = self(data)
 
-        loss = torch.nn.functional.cross_entropy(predicted, target.argmax(1))
-        accuracy = (target.argmax(1) == predicted.argmax(1)).float().mean()
+        loss = torch.nn.functional.cross_entropy(predicted, target)
+        accuracy = (target == predicted.argmax(1)).float().mean()
 
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_accuracy", accuracy, prog_bar=True)
@@ -55,7 +59,7 @@ class Model(L.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters())
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return {
             "optimizer" : optimizer
         }

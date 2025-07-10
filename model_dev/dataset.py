@@ -14,9 +14,11 @@ class Data(Dataset):
 
         self.tokenizer = AutoTokenizer.from_pretrained('distilroberta-base')
         
-        self.onehot = {"Positive": torch.tensor([1, 0, 0]),
-                       "Neutral" : torch.tensor([0, 1, 0]),
-                       "Negative": torch.tensor([0 ,0, 1])}
+        self.onehot = {
+            "Positive": torch.tensor(0),
+            "Neutral" : torch.tensor(1),
+            "Negative": torch.tensor(2)
+        }
 
     def __len__(self) -> int:
         return self.dataframe.height
