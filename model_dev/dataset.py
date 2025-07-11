@@ -6,8 +6,11 @@ from typing import Tuple
 from typing_extensions import Annotated
 
 class Data(Dataset):
-    def __init__(self, file_path :str):
+    def __init__(self,
+                  file_path :str,
+                  seq_length: int):
         super().__init__()
+        self.seq_length = seq_length
 
         self.dataframe = pl.read_csv(file_path,
                                      separator="|")
@@ -38,7 +41,7 @@ class Data(Dataset):
                               return_tensors="pt",
                               padding="max_length",
                               truncation=True,
-                              max_length=100)
+                              max_length=self.seq_length)
         
         target = self.onehot[target]
         return (data["input_ids"][0], target)

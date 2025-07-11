@@ -8,7 +8,8 @@ class Model(L.LightningModule):
                  hidden_dim : int,
                  embedding_dim: int,
                  dropout_rate: float,
-                 learning_rate: float):
+                 learning_rate: float,
+                 bidirectional: bool = False):
         super().__init__()
 
         self.lr = learning_rate
@@ -18,7 +19,8 @@ class Model(L.LightningModule):
         
         self.lstm = LSTM(input_size=  embedding_dim,
                          hidden_size= hidden_dim,
-                         batch_first=True)
+                         batch_first=True,
+                         bidirectional=bidirectional)
         
         self.dropout = Dropout(dropout_rate)
 
