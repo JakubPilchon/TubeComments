@@ -1,11 +1,12 @@
 import lightning as L
 import torch
-from torch.nn import Embedding, LSTM, Dropout, Linear, Softmax
+from torch.nn import Embedding, LSTM, Dropout, Linear, Softmax, Tanh
 
 
 class Model(L.LightningModule):
     def __init__(self, 
-                 hidden_dim : int,
+                 hidden_dim_1 : int,
+                 hidden_dim_2 : int,
                  embedding_dim: int,
                  dropout_rate: float,
                  learning_rate: float,
@@ -18,22 +19,30 @@ class Model(L.LightningModule):
                                    embedding_dim = embedding_dim)
         
         self.lstm = LSTM(input_size=  embedding_dim,
-                         hidden_size= hidden_dim,
+                         hidden_size= hidden_dim_1,
                          batch_first=True,
                          bidirectional=bidirectional)
         
-        self.dropout = Dropout(dropout_rate)
+        self.dropout1 = Dropout(dropout_rate)
+        self.lin1 = Linear(hidden_dim_1, hidden_dim_2)
 
-        self.lin = Linear(hidden_dim, 3)
+        self.activation = Tanh()
+        
+        self.dropout2 = Dropout(dropout_rate)
+        self.lin2 = Linear(hidden_dim_2, 3)
 
 
     def forward(self, x: torch.Tensor):
         x = self.embedding(x)
         x, _ = self.lstm(x) 
-
         x = x[:, -1, :]   
-        x = self.dropout(x)
-        x = self.lin(x)
+
+        x = self.dropout1(x)
+        x = self.lin1(x)
+        x = self.activation(x)
+
+        x = self.dropout2(x)
+        x = self.lin2(x)
         return x
     
     def training_step(self, batch, batch_idx):

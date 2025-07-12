@@ -1,7 +1,9 @@
+import mlflow.pytorch
 import torch 
 import lightning as L
 import mlflow 
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from torch.utils.data import DataLoader, random_split
 from dataset import Data
 from model import Model
@@ -42,7 +44,8 @@ if __name__ == "__main__":
         test_loader = DataLoader(testset, BATCH_SIZE, num_workers=11)
 
         hyperparameters = {
-            "hidden_dim"   : 256,
+            "hidden_dim_1" : 256,
+            "hidden_dim_2" : 128,
             "embedding_dim": 128,
             "dropout_rate" : 0.3,
             "learning_rate": 1e-3
@@ -55,11 +58,29 @@ if __name__ == "__main__":
         model = Model(**hyperparameters)
 
         logger = MLFlowLogger(EXPERIMENT_NAME,
-                              run_id=run.info.run_id)
+                              run_id=run.info.run_id,
+                              save_dir="mlruns",
+                              log_model=True
+                              )
         
-        T = L.Trainer(logger=logger, max_epochs=3)
+        ea_call = EarlyStopping("val_loss", patience=1)
+        mc_call = ModelCheckpoint(
+            dirpath="model_dev/saved_models",
+            filename=f'{run.info.run_name}' + '-{epoch}-{val_accuracy:.2f}'
+        )
+
+        T = L.Trainer(logger=logger,
+                      callbacks=[ea_call, mc_call]
+                      )
 
         T.fit(model, train_loader, test_loader)
+
+        mlflow.pytorch.log_model(model, name="model")
+        model_uri = f"runs:/{run.info.run_id}/model"
+        result = mlflow.register_model(model_uri=model_uri, name=f"LSTM-{run.info.run_name}")
+
+
+
 
 
 
