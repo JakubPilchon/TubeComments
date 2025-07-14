@@ -1,6 +1,6 @@
 import lightning as L
 import torch
-from torch.nn import Embedding, LSTM, Dropout, Linear, Softmax, Tanh
+from torch.nn import Embedding, LSTM, Dropout, Linear, Softmax, Tanh, ReLU
 
 
 class Model(L.LightningModule):
@@ -10,7 +10,8 @@ class Model(L.LightningModule):
                  embedding_dim: int,
                  dropout_rate: float,
                  learning_rate: float,
-                 bidirectional: bool = False):
+                 bidirectional: bool = False,
+                 activation: str = "tanh"):
         super().__init__()
 
         self.lr = learning_rate
@@ -26,7 +27,11 @@ class Model(L.LightningModule):
         self.dropout1 = Dropout(dropout_rate)
         self.lin1 = Linear(hidden_dim_1, hidden_dim_2)
 
-        self.activation = Tanh()
+        match activation:
+            case "tanh":
+                self.activation = Tanh()
+            case "relu":
+                self.activation = ReLU()
         
         self.dropout2 = Dropout(dropout_rate)
         self.lin2 = Linear(hidden_dim_2, 3)
