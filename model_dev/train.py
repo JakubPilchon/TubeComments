@@ -12,7 +12,7 @@ import os
 EXPERIMENT_NAME = "youtube_comments"
 EXPERIMENT_DESCRIPTION = "Predicting sentiment of youtube comments."
 BATCH_SIZE = 256
-SEQUENCE_LENGTH = 150
+SEQUENCE_LENGTH = 40
 cli = mlflow.client.MlflowClient()
 
 #disable tokenizer parallelism, to avoid deadlock
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         hyperparameters = {
             "hidden_dim_1" : 256,
             "hidden_dim_2" : 128,
-            "embedding_dim": 128,
+            "embedding_dim": 192,
             "dropout_rate" : 0.3,
             "learning_rate": 1e-3
         }
