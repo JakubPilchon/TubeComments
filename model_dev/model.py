@@ -82,3 +82,8 @@ class Model(L.LightningModule):
     
     def train_dataloader(self):
         return super().train_dataloader()
+    
+    def predict_step(self,  batch, batch_idx, dataloder_idx = None):
+        data, target = batch
+
+        return self.forward(data).argmax(1)

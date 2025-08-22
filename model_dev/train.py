@@ -1,13 +1,15 @@
 import mlflow.pytorch
-import torch 
+import torch
+import os
+import mlflow
 import lightning as L
-import mlflow 
+import polars as pl
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from torch.utils.data import DataLoader, random_split
 from dataset import Data
 from model import Model
-import os
+
 
 EXPERIMENT_NAME = "youtube_comments"
 EXPERIMENT_DESCRIPTION = "Predicting sentiment of youtube comments."
@@ -36,9 +38,11 @@ if __name__ == "__main__":
 
 
     with mlflow.start_run(experiment_id=experiment_id) as run:
-        data = Data("./dataset/pure_comments.csv",
-                    seq_length = SEQUENCE_LENGTH)
-        trainingset, testset = random_split(data, [0.8, 0.2])
+        data = Data("./dataset/youtube-comments-sentiment.csv",
+                    seq_length = SEQUENCE_LENGTH,
+                    lang_path = "./dataset/language.csv")
+        
+        trainingset, testset = random_split(data, [0.95, 0.05])
 
         train_loader = DataLoader(trainingset, BATCH_SIZE, num_workers=11)
         test_loader = DataLoader(testset, BATCH_SIZE, num_workers=11)
@@ -70,7 +74,7 @@ if __name__ == "__main__":
         )
 
         T = L.Trainer(logger=logger,
-                      callbacks=[ea_call, mc_call]
+                      callbacks=[ea_call, mc_call], max_epochs=1
                       )
 
         T.fit(model, train_loader, test_loader)
@@ -78,6 +82,21 @@ if __name__ == "__main__":
         mlflow.pytorch.log_model(model, name="model")
         model_uri = f"runs:/{run.info.run_id}/model"
         result = mlflow.register_model(model_uri=model_uri, name=f"LSTM-{run.info.run_name}")
+
+        predictions = T.predict(model, test_loader)
+        predictions = list(map(testset.dataset.rev_onehot.get,
+                               torch.cat(predictions, dim=0).reshape(-1).tolist()))
+        
+        test_dataframe = testset.dataset.dataframe[testset.indices]
+
+        test_dataframe = test_dataframe.with_columns(
+            pl.Series("Predicted", predictions)
+        )
+
+        print(test_dataframe.head())
+
+
+
 
 
 
