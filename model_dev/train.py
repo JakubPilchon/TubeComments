@@ -11,9 +11,9 @@ from dataset import Data
 from model import Model
 
 
-EXPERIMENT_NAME = "youtube_comments"
+EXPERIMENT_NAME = "Lstm_comments"
 EXPERIMENT_DESCRIPTION = "Predicting sentiment of youtube comments."
-BATCH_SIZE = 256
+BATCH_SIZE = 512
 SEQUENCE_LENGTH = 40
 cli = mlflow.client.MlflowClient()
 
@@ -22,37 +22,25 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 if __name__ == "__main__":
 
-    experiment = cli.get_experiment_by_name(EXPERIMENT_NAME)
-    print(experiment)
-
-    if experiment is not None:
-        experiment_id = experiment.experiment_id
-    else:     
-        experiment = cli.create_experiment(EXPERIMENT_NAME,
-                                           tags= {
-                                               "description": EXPERIMENT_DESCRIPTION,
-                                               "library": "pytorch",
-                                               "task": "nlp"
-                                           })
-        experiment_id = experiment.experiment_id
+    mlflow.set_experiment("Lstm_comments")
 
 
-    with mlflow.start_run(experiment_id=experiment_id) as run:
+    with mlflow.start_run() as run:
         data = Data("./dataset/youtube-comments-sentiment.csv",
                     seq_length = SEQUENCE_LENGTH,
                     lang_path = "./dataset/language.csv")
         
-        trainingset, testset = random_split(data, [0.95, 0.05])
+        trainingset, testset = random_split(data, [0.8, 0.2])
 
         train_loader = DataLoader(trainingset, BATCH_SIZE, num_workers=11)
         test_loader = DataLoader(testset, BATCH_SIZE, num_workers=11)
 
         hyperparameters = {
-            "hidden_dim_1" : 256,
-            "hidden_dim_2" : 128,
-            "embedding_dim": 192,
+            "hidden_dim_1" : 512,
+            "hidden_dim_2" : 256,
+            "embedding_dim": 512,
             "dropout_rate" : 0.3,
-            "learning_rate": 1e-3
+            "learning_rate": 4e-3
         }
 
         mlflow.log_params(hyperparameters)
@@ -64,7 +52,7 @@ if __name__ == "__main__":
         logger = MLFlowLogger(EXPERIMENT_NAME,
                               run_id=run.info.run_id,
                               save_dir="mlruns",
-                              log_model=True
+                              log_model=False
                               )
         
         ea_call = EarlyStopping("val_loss", patience=1)
@@ -74,7 +62,9 @@ if __name__ == "__main__":
         )
 
         T = L.Trainer(logger=logger,
-                      callbacks=[ea_call, mc_call], max_epochs=1
+                      callbacks=[ea_call],
+                      max_epochs=10,
+                      devices=[0]
                       )
 
         T.fit(model, train_loader, test_loader)
@@ -87,14 +77,6 @@ if __name__ == "__main__":
         predictions = list(map(testset.dataset.rev_onehot.get,
                                torch.cat(predictions, dim=0).reshape(-1).tolist()))
         
-        test_dataframe = testset.dataset.dataframe[testset.indices]
-
-        test_dataframe = test_dataframe.with_columns(
-            pl.Series("Predicted", predictions)
-        )
-
-        print(test_dataframe.head())
-
 
 
 
