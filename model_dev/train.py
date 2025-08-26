@@ -9,11 +9,12 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from torch.utils.data import DataLoader, random_split
 from dataset import Data
 from model import Model
+from eval_plots import PlotCallback
 
 
 EXPERIMENT_NAME = "Lstm_comments"
 EXPERIMENT_DESCRIPTION = "Predicting sentiment of youtube comments."
-BATCH_SIZE = 512
+BATCH_SIZE = 256
 SEQUENCE_LENGTH = 40
 cli = mlflow.client.MlflowClient()
 
@@ -30,12 +31,13 @@ if __name__ == "__main__":
                     seq_length = SEQUENCE_LENGTH,
                     lang_path = "./dataset/language.csv")
         
-        trainingset, testset = random_split(data, [0.8, 0.2])
+        trainingset, testset = random_split(data, [0.95, 0.05])
 
         train_loader = DataLoader(trainingset, BATCH_SIZE, num_workers=11)
-        test_loader = DataLoader(testset, BATCH_SIZE, num_workers=11)
+        test_loader = DataLoader(testset, BATCH_SIZE, num_workers=11, shuffle=False)
 
         hyperparameters = {
+            "activation" : "relu",
             "hidden_dim_1" : 512,
             "hidden_dim_2" : 256,
             "embedding_dim": 512,
@@ -60,22 +62,23 @@ if __name__ == "__main__":
             dirpath="model_dev/saved_models",
             filename=f'{run.info.run_name}' + '-{epoch}-{val_accuracy:.2f}'
         )
+        pl_call = PlotCallback(test_dataset=testset)
 
         T = L.Trainer(logger=logger,
-                      callbacks=[ea_call],
-                      max_epochs=10,
+                      callbacks=[ea_call, pl_call],
+                      max_epochs=1,
                       devices=[0]
                       )
 
-        T.fit(model, train_loader, test_loader)
+        T.fit(model, test_loader, test_loader)
 
         mlflow.pytorch.log_model(model, name="model")
         model_uri = f"runs:/{run.info.run_id}/model"
         result = mlflow.register_model(model_uri=model_uri, name=f"LSTM-{run.info.run_name}")
 
-        predictions = T.predict(model, test_loader)
-        predictions = list(map(testset.dataset.rev_onehot.get,
-                               torch.cat(predictions, dim=0).reshape(-1).tolist()))
+        #predictions = T.predict(model, test_loader)
+        #predictions = list(map(testset.dataset.rev_onehot.get,
+        #                       torch.cat(predictions, dim=0).reshape(-1).tolist()))
         
 
 

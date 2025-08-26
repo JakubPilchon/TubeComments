@@ -14,7 +14,7 @@ from dataset import Data
 from model import Model
 from functools import partial
 
-EXPERIMENT_NAME = "youtube_comments"
+EXPERIMENT_NAME = "Comments_tuning"
 EXPERIMENT_DESCRIPTION = "Predicting sentiment of youtube comments."
 
 #disable tokenizer parallelism, to avoid deadlock
@@ -32,7 +32,7 @@ def objective(trial         : optuna.Trial
     
     current_run = mlflow.active_run()
     
-    data = Data("./dataset/pure_comments.csv",
+    data = Data("./dataset/youtube-comments-sentiment.csv",
                     seq_length = 50)
     trainingset, testset = random_split(data, [0.8, 0.2])
 
@@ -101,4 +101,5 @@ if __name__ == "__main__":
     study.optimize(objective,
                     n_trials=10,
                     show_progress_bar=True,
-                    callbacks=[mlf_callback])
+                    callbacks=[mlf_callback]
+                    )
