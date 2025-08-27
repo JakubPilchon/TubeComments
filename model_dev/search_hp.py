@@ -67,6 +67,7 @@ def objective(trial         : optuna.Trial
     trainer = L.Trainer(logger=logger,
                             callbacks=[ea_call],
                             max_epochs=1,
+                            devices=[0],
                             #enable_progress_bar=False,  
                             enable_model_summary=False 
                         )

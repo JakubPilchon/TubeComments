@@ -72,4 +72,35 @@ def plot_conf_matrix(
     
     return func
 
+def plot_class_accuracy(
+                    figsize: Tuple[float, float] = (8, 6.5)
+                    ) -> Callable[[pl.DataFrame], Figure]:
     
+
+    def func(df : pl.DataFrame
+             ) -> Figure:
+        fig, ax = plt.subplots(figsize=figsize)
+
+        sns.barplot(
+            (df
+                .with_columns((pl.col("Sentiment") == pl.col("Predicted")).alias("Correct"))
+                .group_by("Sentiment")
+                .agg(pl.col("Correct").mean())
+            ),
+            y="Correct",
+            x="Sentiment",
+            ax=ax)
+        
+        ax.set(ylim=(0, 1),
+              ylabel="Accuracy",
+              xlabel="Sentiment")
+        
+        for container in ax.containers:
+            ax.bar_label(container)
+        
+        ax.set_title("Accuracy per Sentiment")
+        mlflow.log_figure(fig, "class_accuracy.png")
+        return fig
+    
+    return func
+

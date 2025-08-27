@@ -9,7 +9,7 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from torch.utils.data import DataLoader, random_split
 from dataset import Data
 from model import Model
-from eval_plots import PlotCallback, plot_conf_matrix
+from eval_plots import PlotCallback, plot_conf_matrix, plot_class_accuracy
 
 
 EXPERIMENT_NAME = "Lstm_comments"
@@ -20,6 +20,7 @@ cli = mlflow.client.MlflowClient()
 
 #disable tokenizer parallelism, to avoid deadlock
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+torch.set_float32_matmul_precision('high')
 
 if __name__ == "__main__":
 
@@ -64,7 +65,8 @@ if __name__ == "__main__":
         )
         pl_call = PlotCallback(test_dataset=testset,
                                funcs=[plot_conf_matrix((9, 7),
-                                                       "viridis")])
+                                                       "viridis"),
+                                      plot_class_accuracy()])
 
         T = L.Trainer(logger=logger,
                       callbacks=[ea_call, pl_call],
