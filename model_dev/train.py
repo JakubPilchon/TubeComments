@@ -9,12 +9,12 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from torch.utils.data import DataLoader, random_split
 from dataset import Data
 from model import Model
-from eval_plots import PlotCallback
+from eval_plots import PlotCallback, plot_conf_matrix
 
 
 EXPERIMENT_NAME = "Lstm_comments"
 EXPERIMENT_DESCRIPTION = "Predicting sentiment of youtube comments."
-BATCH_SIZE = 256
+BATCH_SIZE = 512
 SEQUENCE_LENGTH = 40
 cli = mlflow.client.MlflowClient()
 
@@ -62,7 +62,9 @@ if __name__ == "__main__":
             dirpath="model_dev/saved_models",
             filename=f'{run.info.run_name}' + '-{epoch}-{val_accuracy:.2f}'
         )
-        pl_call = PlotCallback(test_dataset=testset)
+        pl_call = PlotCallback(test_dataset=testset,
+                               funcs=[plot_conf_matrix((9, 7),
+                                                       "viridis")])
 
         T = L.Trainer(logger=logger,
                       callbacks=[ea_call, pl_call],
@@ -70,7 +72,7 @@ if __name__ == "__main__":
                       devices=[0]
                       )
 
-        T.fit(model, test_loader, test_loader)
+        T.fit(model, train_loader, test_loader)
 
         mlflow.pytorch.log_model(model, name="model")
         model_uri = f"runs:/{run.info.run_id}/model"
