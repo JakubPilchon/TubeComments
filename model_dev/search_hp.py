@@ -41,10 +41,10 @@ def objective(trial         : optuna.Trial
     
         
     hyperparameters = {
-            "hidden_dim_1"  : trial.suggest_int("hidden_dim_1", 32, 512),
-            "hidden_dim_2"  : trial.suggest_int("hidden_dim_2", 32, 512),
+            "hidden_dim_1"  : trial.suggest_int("hidden_dim_1", 256, 1024),
+            "hidden_dim_2"  : trial.suggest_int("hidden_dim_2", 256, 1024),
             "activation"   : trial.suggest_categorical("activation", ["tanh", "relu"]),
-            "embedding_dim": trial.suggest_int("embedding_dim", 64, 256),
+            "embedding_dim": trial.suggest_int("embedding_dim", 512, 2056),
             "dropout_rate" : trial.suggest_float("dropout_rate", 0.1, 0.35),
             "learning_rate": trial.suggest_float("learning_rate", 1e-5, 1e-3)
     }
@@ -83,24 +83,15 @@ def objective(trial         : optuna.Trial
 
 if __name__ == "__main__":
 
-    #cli = mlflow.MlflowClient()
-    #experiment = cli.get_experiment_by_name(EXPERIMENT_NAME) # we assume that the experiment already exists
-
-
-    #objective = partial(objective,
-    #                        train_loader=train_loader,
-    #                        val_loader=test_loader)
-    
-    #objective = mlf_callback.track_in_mlflow(objective)
 
     mlflow.set_tracking_uri('http://localhost:5000')
 
     study = optuna.create_study(
-                                study_name="Youtube_Comments_tuning"#,
-                                #storage="sqlite:///db.sqlite3"
+                                study_name="Youtube_Comments_tuning",
+                                storage="sqlite:///db.sqlite3"
                                )
     study.optimize(objective,
-                    n_trials=10,
+                    n_trials=15,
                     show_progress_bar=True,
                     callbacks=[mlf_callback]
                     )
