@@ -2,10 +2,12 @@ import polars as pl
 import torch
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 from lightning import Callback
 from typing import Callable, Any, Tuple, Iterable
 from matplotlib.figure import Figure
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, Trainer
+from datasets import Dataset
 import mlflow
 
 type PlotFunction = Callable[[pl.DataFrame], Tuple[Figure, str]]
@@ -38,6 +40,39 @@ class PlotCallback(Callback):
 
         for f in self.funcs:
             fig, text = f(self.df)
+            mlflow.log_figure(fig, text + ".png")
+
+def transformerPlot(
+        trainer: Trainer,
+        dataset: Dataset,
+        funcs: Iterable[PlotFunction] = None
+                    ) -> None:
+    
+    id2label = {
+             0 : "Positive",
+             1 : "Neutral",
+             2 : "Negative"
+        }
+    
+    results = trainer.predict(dataset)
+
+    print(np.argmax(results.predictions, axis=1))
+    df = (dataset
+            .to_polars()
+            .rename({
+                "text":"CommentText",
+                "labels":"Sentiment"
+            })
+            .with_columns(
+                pl.lit(np.argmax(results.predictions, axis=1))
+                .replace(id2label, default=None)
+                .alias("Predicted"),
+                pl.col("Sentiment")
+                .replace(id2label, default=None)
+            ))
+
+    for f in funcs:
+            fig, text = f(df)
             mlflow.log_figure(fig, text + ".png")
 
 
