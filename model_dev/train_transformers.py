@@ -90,15 +90,15 @@ with mlflow.start_run():
     metrics = trainer.evaluate()
     print(metrics)
 
-    model.config.id2label = {
-             0 : "Positive",
-             1 : "Neutral",
-             2 : "Negative"
-        }
-    pip = pipeline(task = "sentiment-analysis",
+    model.config.id2label = {0: "Positive", 1: "Neutral", 2: "Negative"}
+    model.config.label2id = {"Positive": 0, "Neutral": 1, "Negative": 2}
+
+    pip = pipeline(task = "text-classification",
                    model = model,
                    tokenizer = tokenizer
                    )
+    
+    pip.save_pretrained(f"saved_models/{run_name}")
 
     output = mlflow.transformers.generate_signature_output(pip, "hello world")
     signature = mlflow.models.infer_signature("hello world",
@@ -117,4 +117,6 @@ with mlflow.start_run():
         model_uri= model_info.model_uri,
         name = f"transformer-{run_name}"
     )
+
+
     
