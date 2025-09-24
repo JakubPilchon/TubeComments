@@ -10,6 +10,7 @@ class Video(SQLModel, table=True):
     videoName: str
     channelName: str
     videoKey: str
+    category: str | None
     viewCount: int
     likeCount: int
     commentCount: int

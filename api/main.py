@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from googleapiclient.discovery import build
 from transformers import pipeline
-from funcs import load_model, init_youtube_api
+from utils import load_model, categories
 from db import init_db, get_session, Video, Comment
 from sqlmodel import Session, select
 from typing import Annotated
@@ -58,6 +58,7 @@ def post_film(video_key: str, session: SessionDep):
     video = Video(videoName    = response["items"][0]["snippet"]["title"],
                   channelName  = response["items"][0]["snippet"]["channelTitle"],
                   videoKey     = video_key,
+                  category     = categories.get(response["items"][0]["snippet"]["categoryId"], "No category"),
                   viewCount    = response["items"][0]["statistics"]["viewCount"],
                   likeCount    = response["items"][0]["statistics"]["likeCount"],
                   commentCount = response["items"][0]["statistics"]["commentCount"])
@@ -71,12 +72,9 @@ def post_film(video_key: str, session: SessionDep):
         textFormat="plainText"
     )
 
-    assert request, "Request is false"
-    print("Hello world!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     while request:
         try:
             response = request.execute()
-            print(response)
             for item in response["items"]:
                 snippet = item["snippet"]["topLevelComment"]["snippet"]
                 text = snippet["textDisplay"]
