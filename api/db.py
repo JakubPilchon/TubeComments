@@ -1,8 +1,8 @@
 from sqlmodel import Field, Session, SQLModel, create_engine
 from typing import Annotated
 import os
-
-DB_URL = "sqlite:///database.db"
+pwd = os.getcwd()
+DB_URL = f"sqlite:///{pwd}/database.db"
 CONNECTION_ARGS = {"check_same_thread": False}
 
 class Video(SQLModel, table=True):
@@ -14,7 +14,14 @@ class Video(SQLModel, table=True):
     likeCount: int
     commentCount: int
 
-engine = create_engine(DB_URL, connect_args=CONNECTION_ARGS)
+class Comment(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    videoId: int = Field(default=None, foreign_key="video.id", index=True)
+    commentText: str
+    sentiment: str | None
+    likeCount: int
+
+engine = create_engine(DB_URL, connect_args=CONNECTION_ARGS, echo=True)
 
 def init_db():
     SQLModel.metadata.create_all(engine)
