@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from googleapiclient.discovery import build
-from transformers import pipeline
-from utils import load_model, categories
+from utils import load_model, categories, ModelDep
 from db import init_db, get_session, Video, Comment
 from sqlmodel import Session, select
 from typing import Annotated
@@ -33,6 +33,10 @@ def get_comments(id: int, session: SessionDep):
     for com in result:
         comments.append(com)
 
+    if not comments:
+        raise HTTPException(status_code=404, 
+                            detail="Comment for the video were not found")
+
     return comments
 
 @app.get("/video/{id}")
@@ -42,8 +46,10 @@ def main(id : int, session: SessionDep):
         raise HTTPException(status_code=404, detail="Video not found")
     return video
 
-@app.post("/getVideoInfo")
-def post_film(video_key: str, session: SessionDep):
+@app.post("/getVideoInfo", status_code=201)
+def post_film(video_key: str,
+              session: SessionDep,
+              model: ModelDep):
 
     youtube = build(serviceName="youtube",
                         version="v3",
@@ -54,6 +60,10 @@ def post_film(video_key: str, session: SessionDep):
     id=video_key
     )
     response = request.execute()
+
+    if response["pageInfo"]["totalResults"] == 0:
+        raise HTTPException(status_code=400,
+                             detail="Invalid video_key")
 
     video = Video(videoName    = response["items"][0]["snippet"]["title"],
                   channelName  = response["items"][0]["snippet"]["channelTitle"],
@@ -79,7 +89,7 @@ def post_film(video_key: str, session: SessionDep):
                 snippet = item["snippet"]["topLevelComment"]["snippet"]
                 text = snippet["textDisplay"]
 
-                sentiment = app.state.model(text)[0]["label"]
+                sentiment = model(text)[0]["label"]
                 comm = Comment(
                     commentText=text,
                     sentiment=sentiment,
@@ -91,8 +101,8 @@ def post_film(video_key: str, session: SessionDep):
                 
             request = youtube.comments().list_next(request, response)
         except Exception as e:
-            return {"result": "error",
-                    "exception": str(e)}
+            raise HTTPException(status_code=500,
+                                detail=str(e))
 
     session.commit()
     

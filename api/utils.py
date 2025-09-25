@@ -1,7 +1,10 @@
 from transformers import pipeline, Pipeline
 from googleapiclient.discovery import build
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from typing import Annotated
 import logging as log
+
+
 
 def load_model() -> Pipeline: 
     pipe = pipeline("text-classification", "api/model", device=0)
@@ -42,3 +45,5 @@ categories = {
     "43": "Shows",
     "44": "Trailers",
 }
+
+ModelDep = Annotated[Pipeline, Depends(load_model)]
