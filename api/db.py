@@ -1,6 +1,8 @@
 from sqlmodel import Field, Session, SQLModel, create_engine
 from typing import Annotated
+from fastapi import Depends
 import os
+
 pwd = os.getcwd()
 DB_URL = f"sqlite:///{pwd}/database.db"
 CONNECTION_ARGS = {"check_same_thread": False}
@@ -30,3 +32,5 @@ def init_db():
 def get_session():
     with Session(engine) as session:
         yield session
+
+SessionDep = Annotated[Session, Depends(get_session)]

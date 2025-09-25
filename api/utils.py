@@ -7,7 +7,13 @@ import logging as log
 
 
 def load_model() -> Pipeline: 
-    pipe = pipeline("text-classification", "api/model", device=0)
+    # TODO: better handlign for wheter to use cpu od gpu
+
+    pipe = pipeline("text-classification",
+                    "api/model",
+                    device=0,
+                    max_length=512,
+                    truncation=True)
     log.info("Model loaded") 
     return pipe
 
