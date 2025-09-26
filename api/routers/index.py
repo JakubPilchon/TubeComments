@@ -1,28 +1,48 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from ..db import get_session, SessionDep, Video, Comment
 from ..utils import ModelDep, categories
-from sqlmodel import select
+from sqlmodel import select, delete
 from googleapiclient.discovery import build
+import regex
 import os
 
 API_KEY = os.getenv("YOUTUBE_API_KEY")
 assert API_KEY is not None
 
 index = APIRouter(
-    prefix="/index",
-    tags=["index"]
+    prefix="/menu",
+    tags=["Menu"]
 )
 
 @index.get("/getVideos")
 def get_videos(session: SessionDep):
+    """
+    Retrieve basic information about videos in the database.
+    Returns title of the video, authors channel name and id of the video in database.
+
+    """
     query = select(Video.videoName, Video.id, Video.channelName)
     videos = session.exec(query).mappings().all()
     return videos
 
-@index.post("/getVideoInfo", status_code=201)
-def post_film(video_key: str,
+@index.post("/getVideoInfo", status_code=204)
+def post_film(video_link: str,
               session: SessionDep,
               model: ModelDep):
+    """
+    Downloads data about selected video from youtube api, scrapes comments from video. 
+    Then uploads daat to database.
+
+    Parameters:
+    - **video_link** - link to youtube video
+    """
+
+    video_key = regex.search("(?<=v=).{11}|(?<=youtu\.be/).{11}", video_link).group()
+    print(video_key)
+    if video_key is None:
+        raise HTTPException(status_code=400,
+                            detail="Video Key not found in provided link")
 
     youtube = build(serviceName="youtube",
                         version="v3",
@@ -79,4 +99,19 @@ def post_film(video_key: str,
 
     session.commit()
     
-    return {"result": "ok"}
+
+@index.delete("/deleteVideo", status_code=204)
+def delete_video(id: int, session: SessionDep):
+    """Deletes both video and comments info from the database.
+    
+    Parameters:
+    - **id** - id of video in database
+    """
+
+    query = delete(Video).where(Video.id == id)
+    session.exec(query)
+
+    query = delete(Comment).where(Comment.videoId == id)
+    session.exec(query)
+
+    session.commit()
