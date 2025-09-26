@@ -1,17 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.responses import JSONResponse
-
-from api.utils import load_model, categories, ModelDep
+from api.utils import load_model
 from api.db import init_db, get_session, Video, Comment, SessionDep
 from sqlmodel import Session, select
-from typing import Annotated
-from api.routers import index
+from api.routers import index, figures
 import logging
-import os
-
-
-
-
 
 logger = logging.getLogger("uvicorn.error")
 logger.setLevel(logging.DEBUG)
@@ -24,6 +16,7 @@ def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(index)
+app.include_router(figures)
 
 @app.get("/")
 def get_status():
