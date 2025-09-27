@@ -22,7 +22,7 @@ app.include_router(figures)
 def get_status():
     return {"result": "app is running"}
 
-@app.get("/commentList/{id}")
+@app.get("/commentList/{id}", deprecated=True)
 def get_comments(id: int, session: SessionDep):
     query = (select(Comment)
              .where(Comment.videoId == id))
@@ -37,7 +37,7 @@ def get_comments(id: int, session: SessionDep):
 
     return comments
 
-@app.get("/video/{id}")
+@app.get("/video/{id}", deprecated=True)
 def main(id : int, session: SessionDep):
     video = session.get(Video, id)
     if not video:

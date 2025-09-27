@@ -2,16 +2,22 @@ from transformers import pipeline, Pipeline
 from googleapiclient.discovery import build
 from fastapi import FastAPI, Depends
 from typing import Annotated
+from torch.cuda import is_available
 import logging as log
 
 
 
 def load_model() -> Pipeline: 
-    # TODO: better handling for wheter to use cpu od gpu
+    
+    #check if gpu is available
+    if is_available():
+        device = "cuda:0" # set at zero for my specific hardware.
+    else:
+        device = "cpu"
 
     pipe = pipeline("text-classification",
                     "api/model",
-                    device=0,
+                    device=device,
                     max_length=512,
                     truncation=True)
     log.info("Model loaded") 

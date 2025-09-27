@@ -1,12 +1,20 @@
-from sqlmodel import Field, Session, SQLModel, create_engine
+from sqlmodel import (Field, Session, SQLModel, create_engine,
+                      Column, Enum )
 from typing import Annotated
 from fastapi import Depends
 from datetime import datetime
 import os
+import enum
 
 pwd = os.getcwd()
 DB_URL = f"sqlite:///{pwd}/database.db"
 CONNECTION_ARGS = {"check_same_thread": False}
+
+class Sentiment(str, enum.Enum):
+    Positive = "Positive"
+    Neutral = "Neutral"
+    Negative = "Negative"
+ 
 
 class Video(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -23,7 +31,7 @@ class Comment(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     videoId: int = Field(default=None, foreign_key="video.id", index=True)
     commentText: str
-    sentiment: str | None
+    sentiment: Sentiment = Field(sa_column=Column(Enum(Sentiment)))
     likeCount: int
     publishingDate: datetime
 
