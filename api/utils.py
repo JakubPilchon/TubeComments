@@ -7,7 +7,7 @@ import logging as log
 
 
 def load_model() -> Pipeline: 
-    # TODO: better handlign for wheter to use cpu od gpu
+    # TODO: better handling for wheter to use cpu od gpu
 
     pipe = pipeline("text-classification",
                     "api/model",

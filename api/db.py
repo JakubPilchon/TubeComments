@@ -1,6 +1,7 @@
 from sqlmodel import Field, Session, SQLModel, create_engine
 from typing import Annotated
 from fastapi import Depends
+from datetime import datetime
 import os
 
 pwd = os.getcwd()
@@ -16,6 +17,7 @@ class Video(SQLModel, table=True):
     viewCount: int
     likeCount: int
     commentCount: int
+    publishingDate: datetime
 
 class Comment(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -23,6 +25,7 @@ class Comment(SQLModel, table=True):
     commentText: str
     sentiment: str | None
     likeCount: int
+    publishingDate: datetime
 
 engine = create_engine(DB_URL, connect_args=CONNECTION_ARGS, echo=True)
 

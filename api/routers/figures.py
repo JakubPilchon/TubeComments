@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from api.db import SessionDep, Comment
-from sqlmodel import select, func
+from sqlmodel import select, func, and_
+from datetime import datetime
 
 figures = APIRouter(
     prefix="/figures",
@@ -86,7 +87,39 @@ def get_video_lenghts(
 
     return result
 
+@figures.get("/getPublishDates/{id}")
+def get_publishing_dates(
+    id: int,
+    lower_date: datetime,
+    higher_date: datetime,
+    session: SessionDep):
+    """Returns a lists of comment publishing dates with corresponding sentiment
+    
+    Parameters:
+    - **id** - Id of video in database
+    - **lower_date** - dates up to this date will be filtered out
+    - **higher_date** - dates following this date will be filtered out
+    """
 
+    query = (
+        select(Comment.sentiment, Comment.publishingDate)
+        .where(
+            and_(Comment.videoId == id,
+               Comment.publishingDate >= lower_date,
+               Comment.publishingDate <= higher_date)
+        )
+    )
+
+    result = {
+        "date" : [],
+        "sentiment" : []
+    }
+
+    for sentiment, date in session.exec(query):
+        result["date"].append(date)
+        result["sentiment"].append(sentiment)
+
+    return result
     
     
 

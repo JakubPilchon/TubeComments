@@ -4,6 +4,7 @@ from ..db import get_session, SessionDep, Video, Comment
 from ..utils import ModelDep, categories
 from sqlmodel import select, delete
 from googleapiclient.discovery import build
+import datetime
 import regex
 import os
 
@@ -58,13 +59,14 @@ def post_film(video_link: str,
         raise HTTPException(status_code=400,
                              detail="Invalid video_key")
 
-    video = Video(videoName    = response["items"][0]["snippet"]["title"],
-                  channelName  = response["items"][0]["snippet"]["channelTitle"],
-                  videoKey     = video_key,
-                  category     = categories.get(response["items"][0]["snippet"]["categoryId"], "No category"),
-                  viewCount    = response["items"][0]["statistics"]["viewCount"],
-                  likeCount    = response["items"][0]["statistics"]["likeCount"],
-                  commentCount = response["items"][0]["statistics"]["commentCount"])
+    video = Video(videoName      = response["items"][0]["snippet"]["title"],
+                  channelName    = response["items"][0]["snippet"]["channelTitle"],
+                  publishingDate = datetime.datetime.fromisoformat(response["items"][0]["snippet"]["publishedAt"]),
+                  videoKey       = video_key,
+                  category       = categories.get(response["items"][0]["snippet"]["categoryId"], "No category"),
+                  viewCount      = response["items"][0]["statistics"]["viewCount"],
+                  likeCount      = response["items"][0]["statistics"]["likeCount"],
+                  commentCount   = response["items"][0]["statistics"]["commentCount"])
     
     session.add(video)
     session.commit()
@@ -84,10 +86,11 @@ def post_film(video_link: str,
 
                 sentiment = model(text)[0]["label"]
                 comm = Comment(
-                    commentText=text,
-                    sentiment=sentiment,
-                    likeCount=snippet["likeCount"],
-                    videoId=video.id
+                    commentText    = text,
+                    sentiment      = sentiment,
+                    likeCount      = snippet["likeCount"],
+                    videoId        = video.id,
+                    publishingDate = datetime.datetime.fromisoformat(snippet["publishedAt"])
                 )
 
                 session.add(comm)
