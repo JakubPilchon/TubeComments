@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from api.utils import load_model
 from api.db import init_db, get_session, Video, Comment, SessionDep
 from sqlmodel import Session, select
-from api.routers import index, figures
+from api.routers import index, figures, info
 import logging
 
 logger = logging.getLogger("uvicorn.error")
@@ -17,6 +17,7 @@ def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(index)
 app.include_router(figures)
+app.include_router(info)
 
 @app.get("/")
 def get_status():
@@ -37,12 +38,7 @@ def get_comments(id: int, session: SessionDep):
 
     return comments
 
-@app.get("/video/{id}", deprecated=True)
-def main(id : int, session: SessionDep):
-    video = session.get(Video, id)
-    if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
-    return video
+
 
 
     

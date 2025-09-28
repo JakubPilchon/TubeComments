@@ -1,8 +1,9 @@
 from sqlmodel import (Field, Session, SQLModel, create_engine,
-                      Column, Enum )
+                      Column, Enum)
 from typing import Annotated
 from fastapi import Depends
 from datetime import datetime
+from pydantic import computed_field
 import os
 import enum
 
@@ -26,6 +27,12 @@ class Video(SQLModel, table=True):
     likeCount: int
     commentCount: int
     publishingDate: datetime
+
+    @computed_field
+    @property
+    def engagementRate(self) -> float:
+        return ((self.likeCount + self.commentCount) / self.viewCount
+                if self.viewCount != 0 else .0)
 
 class Comment(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
