@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from ..db import get_session, SessionDep, Video, Comment
-from ..utils import ModelDep, categories
+from ..utils import ModelDep, categories, YoutubeUrl
 from sqlmodel import select, delete
 from googleapiclient.discovery import build
 import datetime
@@ -28,7 +28,7 @@ def get_videos(session: SessionDep):
     return videos
 
 @index.post("/getVideoInfo", status_code=204)
-def post_film(video_link: str,
+def post_film(video_link: YoutubeUrl,
               session: SessionDep,
               model: ModelDep):
     """
@@ -39,11 +39,6 @@ def post_film(video_link: str,
     - **video_link** - link to youtube video
     """
 
-    video_key = regex.search("(?<=v=).{11}|(?<=youtu\.be/).{11}", video_link).group()
-    print(video_key)
-    if video_key is None:
-        raise HTTPException(status_code=400,
-                            detail="Video Key not found in provided link")
 
     youtube = build(serviceName="youtube",
                         version="v3",
@@ -51,7 +46,7 @@ def post_film(video_link: str,
     
     request = youtube.videos().list(
     part="snippet,contentDetails,statistics",
-    id=video_key
+    id=video_link.video_key
     )
     response = request.execute()
 
@@ -62,7 +57,7 @@ def post_film(video_link: str,
     video = Video(videoName      = response["items"][0]["snippet"]["title"],
                   channelName    = response["items"][0]["snippet"]["channelTitle"],
                   publishingDate = datetime.datetime.fromisoformat(response["items"][0]["snippet"]["publishedAt"]),
-                  videoKey       = video_key,
+                  videoKey       = video_link.video_key,
                   category       = categories.get(response["items"][0]["snippet"]["categoryId"], "No category"),
                   viewCount      = response["items"][0]["statistics"]["viewCount"],
                   likeCount      = response["items"][0]["statistics"]["likeCount"],
@@ -73,7 +68,7 @@ def post_film(video_link: str,
     
     request = youtube.commentThreads().list(
         part="snippet",
-        videoId = video_key,
+        videoId = video_link.video_key,
         textFormat="plainText"
     )
 

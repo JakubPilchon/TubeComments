@@ -3,6 +3,8 @@ from googleapiclient.discovery import build
 from fastapi import FastAPI, Depends
 from typing import Annotated
 from torch.cuda import is_available
+from pydantic import BaseModel, HttpUrl, field_validator
+import re
 import logging as log
 
 
@@ -59,3 +61,26 @@ categories = {
 }
 
 ModelDep = Annotated[Pipeline, Depends(load_model)]
+
+
+class YoutubeUrl(BaseModel):
+    url: str
+
+    @field_validator("url")
+    @classmethod
+    def validate_youtube(cls, url: str) -> str:
+        #pattern = r"""^(http(s)?://)? # protocol
+        #            (?:(www.|m.)?youtube.com/watch\?v=|youtu.be/) # domain
+        #            [a-zA-Z0-9\-_]{11} # video key
+        #            .*$ # other parameters
+        #            """
+        pattern = r"^(http(s)?://)?(?:(www.|m.)?youtube.com/watch\?v=|youtu.be/)[a-zA-Z0-9\-_]{11}.*$"
+
+        if re.match(pattern, url):
+            return url
+        else:
+            raise ValueError("Provided string is not valid youtube url")
+        
+    @property
+    def video_key(self)-> str:
+        return re.search("(?<=v=)[a-zA-Z0-9\-_]{11}|(?<=youtu\.be/)[a-zA-Z0-9\-_]{11}", self.url).group()
