@@ -18,7 +18,7 @@ def load_model() -> Pipeline:
         device = "cpu"
 
     pipe = pipeline("text-classification",
-                    "api/model",
+                    "model",
                     device=device,
                     max_length=512,
                     truncation=True)
