@@ -4,7 +4,8 @@
 # Fixed code for betweenness centrality visualization
 # Assuming:
 # - G is a graph object (from igraph)
-# - betwen should be a vector of betweenness values (likely from betweenness(G))
+# - betwen is a vector of betweenness values (note: appears to be a typo for 'betweenness')
+#   This variable name is kept as-is since it's defined elsewhere in the environment
 # - theme_dracula is defined elsewhere in the environment
 
 # Create data frame with proper syntax

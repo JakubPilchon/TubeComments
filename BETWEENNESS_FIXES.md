@@ -33,9 +33,9 @@ betweenness_df <- data.frame(
 ```
 
 ### 2. Incomplete Variable Name
-**Problem**: Variable `betwen` appears to be incomplete/typo
+**Problem**: Variable `betwen` appears to be incomplete/typo (likely meant to be 'betweenness')
 
-**Note**: Assumed this should reference betweenness values, likely from `betweenness(G)`. The variable name is kept as-is since the actual source variable is not provided in the problem statement.
+**Note**: The variable name `betwen` is kept as-is since the problem statement indicates it's defined elsewhere in the user's environment. If you have control over this variable, consider renaming it to `betweenness` for clarity.
 
 ### 3. Coordinate Flip Logic
 **Problem**: Using `coord_flip()` with axis mapping that would result in horizontal bars with labels on the left
