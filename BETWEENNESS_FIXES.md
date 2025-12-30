@@ -5,13 +5,13 @@
 The original code had several syntax and logical errors:
 
 ```r
-betweeness_df <- data.frame(
+betweenness_df <- data.frame(
   Nazwa <- V(G)$name,
   Pośrednictwo <-  betwen
 )
 
 ggplot(
-  betweeness_df %>% top_n(10, Pośrednictwo),
+  betweenness_df %>% top_n(10, Pośrednictwo),
   aes(x=Pośrednictwo, y=Nazwa)
 ) +
   coord_flip() +
@@ -26,7 +26,7 @@ ggplot(
 
 **Fix**: Changed to proper syntax:
 ```r
-betweeness_df <- data.frame(
+betweenness_df <- data.frame(
   Nazwa = V(G)$name,
   Pośrednictwo = betwen
 )

@@ -8,14 +8,14 @@
 # - theme_dracula is defined elsewhere in the environment
 
 # Create data frame with proper syntax
-betweeness_df <- data.frame(
+betweenness_df <- data.frame(
   Nazwa = V(G)$name,
   Pośrednictwo = betwen
 )
 
 # Create visualization with proper axis mapping and ordering
 ggplot(
-  betweeness_df %>% top_n(10, Pośrednictwo),
+  betweenness_df %>% top_n(10, Pośrednictwo),
   aes(x = reorder(Nazwa, Pośrednictwo), y = Pośrednictwo)
 ) +
   geom_col() +
